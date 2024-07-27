@@ -8,5 +8,5 @@ use Stancl\Tenancy\Database\Models\Domain as TenancyDomain;
 
 class Domain extends TenancyDomain
 {
-    use HasFactory;
+    //
 }
