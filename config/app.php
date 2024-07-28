@@ -123,4 +123,7 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    'url_protocol' => env('APP_URL_PROTOCOL', 'http'),
+    'url_port' => env('APP_URL_PORT', ''),
+
 ];

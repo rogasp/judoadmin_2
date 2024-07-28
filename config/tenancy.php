@@ -161,7 +161,7 @@ return [
      * understand which ones you want to enable.
      */
     'features' => [
-        // Stancl\Tenancy\Features\UserImpersonation::class,
+        Stancl\Tenancy\Features\UserImpersonation::class,
         // Stancl\Tenancy\Features\TelescopeTags::class,
         Stancl\Tenancy\Features\UniversalRoutes::class,
         // Stancl\Tenancy\Features\TenantConfig::class, // https://tenancyforlaravel.com/docs/v3/features/tenant-config
@@ -194,4 +194,5 @@ return [
         '--class' => 'DatabaseSeeder', // root seeder class
         // '--force' => true,
     ],
+    'create_tenant_job_qued' => env('TENANCY_CREATE_TENANT_JOB_QUED', false),
 ];

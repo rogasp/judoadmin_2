@@ -3,7 +3,6 @@
 namespace App\Livewire\Auth;
 
 use App\Models\Tenant;
-use App\Models\User;
 use Illuminate\Auth\AuthManager;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
@@ -11,6 +10,7 @@ use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
+use Stancl\Tenancy\Features\UserImpersonation;
 
 class RegisterForm extends Component
 {
@@ -50,37 +50,54 @@ class RegisterForm extends Component
         $this->selectedDomain = $this->centralDomains[0] ?? null;
     }
 
-    public function submit(AuthManager $auth): void
+    public function submit(AuthManager $auth): \Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector|\Illuminate\Foundation\Application
     {
-        $this->addUniqueSubdomainRule();
-
-        //dd('HERE2');
-        //$this->validate();
-
-        //dd('HERE3');
-        $tenant = Tenant::create([
-            'name' => $this->subDomain,
-        ]);
-
-        // Create a new domain with subdomain and attach
-        $domain = $this->subDomain . '.' . $this->selectedDomain;
-        $tenant->domains()->create(['domain' => $domain]);
-
-        $userData = [
-            'email' => $this->email,
+        //$this->addUniqueSubdomainRule();
+        //dd($this->subDomain, $this->selectedDomain, $this->name, $this->email, $this->password, $this->password_confirmation);
+        $data = [
             'name' => $this->name,
-            'password' => Hash::make($this->password),
+            'email' => $this->email,
+            'password' => $this->password,
+            'subDomain' => $this->subDomain,
         ];
+        //$data = $this->validate();
+        $data['password'] = bcrypt($data['password']);
 
-        $tenant->run(function () use ($userData){
-            $user = User::create($userData);
-            auth()->login($user);
-        });
+        $domain = $data['subDomain'];
+        unset($data['subDomain']);
+        $domain = $domain . '.' . $this->selectedDomain;
 
-        // Omdirigera till tenantens dashboard eller annan lämplig sida
-        $this->redirect(
-            url: route('pages:tenants:home')
+        //dd($data, $domain);
+
+        $tenant = Tenant::create($data + [
+                'ready' => false,
+                // some other stuff, if you need. like cashier trials
+            ]);
+
+        $tenant->domains()->create(
+            attributes: [
+                'domain' => $domain,
+            ]
         );
+        // Bygg fullständig URL för omdirigering
+        $protocol = request()->getScheme(); // http eller https
+        $host = $domain; // Subdomänen vi har skapat
+        $port = request()->getPort(); // Portnummer om den inte är standard
+
+        $redirectUrl = $protocol . '://' . $host;
+        if ($port && $port != 80 && $port != 443) {
+            $redirectUrl .= ':' . $port;
+        }
+        $redirectUrl .= route('pages:tenants:home', [], false);
+
+        // Generera en impersonation token för att autentisera användaren i tenant-konteksten
+        $token = tenancy()->impersonate($tenant, auth()->id(), $redirectUrl);
+
+
+        $url = tenant_route($domain, 'pages:tenants:auth:impersonate', ['token' => $token->token]);
+        dd( $token, $url);
+        // Omdirigera till tenantens domän med impersonation token
+        return redirect($url);
     }
     public function render(Factory $factory): view
     {

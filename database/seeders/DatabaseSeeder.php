@@ -17,35 +17,34 @@ class DatabaseSeeder extends Seeder
     {
         // User::factory(10)->create();
 
-//        User::factory()->create([
-//            'name' => 'Roger Aspelin',
-//            'email' => 'raspelin69@gmail.com',
-//        ]);
+        User::factory()->create([
+            'name' => 'Roger Aspelin',
+            'email' => 'raspelin69@gmail.com',
+        ]);
 
-        $tenant = Tenant::query()->create(
-            attributes: [
-                'id' => 'foo',
-            ]
-        );
+        $data = [
+            'domain' => 'foo',
+            'name' => 'Roger Aspelin',
+            'email' => 'raspelin69gmail.com',
+            'password' => 'password',
+        ];
+
+        $data['password'] = bcrypt($data['password']);
+
+        $domain = $data['domain'];
+        unset($data['domain']);
+
+        $tenant = Tenant::create($data + [
+                'ready' => false,
+                // some other stuff, if you need. like cashier trials
+            ]);
+
 
         $tenant->domains()->create(
             attributes: [
                 'domain' => 'foo.judoadmin.local',
             ]
         );
-
-        Tenant::all()->runForEach(function (Tenant $tenant) {
-            $user = User::factory()->create([
-                'name' => 'Roger Aspelin',
-                'email' => 'raspelin69@gmail.com',
-            ]);
-            Club::factory()->for($user)->create([
-                'name' => 'Judo Club 1',
-            ]);
-        });
-
-
-
 
     }
 }
