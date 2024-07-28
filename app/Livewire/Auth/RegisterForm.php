@@ -91,11 +91,9 @@ class RegisterForm extends Component
         $redirectUrl .= route('pages:tenants:home', [], false);
 
         // Generera en impersonation token för att autentisera användaren i tenant-konteksten
-        $token = tenancy()->impersonate($tenant, auth()->id(), $redirectUrl);
-
+        $token = tenancy()->impersonate($tenant, auth()->id(), $redirectUrl, 'web');
 
         $url = tenant_route($domain, 'pages:tenants:auth:impersonate', ['token' => $token->token]);
-        dd( $token, $url);
         // Omdirigera till tenantens domän med impersonation token
         return redirect($url);
     }
