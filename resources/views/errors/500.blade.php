@@ -42,7 +42,7 @@
 <div class="container">
     <h1>Server Error</h1>
     <p>Something went wrong. Please try again later.</p>
-    <a class="button" href="/">Go to Home</a>
+    <a class="button" href="{{ config('app.url') }}">Go to Home</a>
 </div>
 </body>
 </html>
