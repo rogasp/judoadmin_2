@@ -22,4 +22,16 @@ return Application::configure(basePath: dirname(__DIR__))
             return response()->view('errors.building', [], 503);
         });
 
+        // Hantera QueryException och andra relaterade undantag
+        $exceptions->renderable(function (Illuminate\Database\QueryException $e, $request) {
+            if (tenant() && !tenant('ready')) {
+                return response()->view('errors.building', [], 503);
+            }
+        });
+
+        // Fånga alla andra undantag och logga dem
+        $exceptions->reportable(function (Throwable $e) {
+            Log::error('Unhandled Exception: ', ['exception' => $e]);
+        });
+
     })->create();
