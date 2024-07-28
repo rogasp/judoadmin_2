@@ -21,9 +21,5 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->renderable(function (Stancl\Tenancy\Exceptions\TenantDatabaseDoesNotExistException $e, $request) {
             return response()->view('errors.building', [], 503);
         });
-        // Optionellt: Lägg till en renderable för att visa ett standardfelmeddelande för alla andra undantag
-        $exceptions->renderable(function (Throwable $e, $request) {
-            return response()->view('errors.500', ['error' => $e->getMessage()], 500);
-        });
 
     })->create();
