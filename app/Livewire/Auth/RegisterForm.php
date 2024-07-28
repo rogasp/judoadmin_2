@@ -47,11 +47,11 @@ class RegisterForm extends Component
     public function mount()
     {
         $this->centralDomains = Config::get('tenancy.central_domains', []);
+        $this->selectedDomain = $this->centralDomains[0] ?? null;
     }
 
     public function submit(AuthManager $auth): void
     {
-        //dd('HERE1');
         $this->addUniqueSubdomainRule();
 
         //dd('HERE2');
@@ -62,21 +62,20 @@ class RegisterForm extends Component
             'name' => $this->subDomain,
         ]);
 
-        //dd('HERE4');
-        $user = User::create([
-            'email' => $this->email,
-            'name' => $this->name,
-            'password' => Hash::make($this->password),
-        ]);
-
         // Create a new domain with subdomain and attach
         $domain = $this->subDomain . '.' . $this->selectedDomain;
         $tenant->domains()->create(['domain' => $domain]);
 
-        $tenant->users()->attach($user);
+        $userData = [
+            'email' => $this->email,
+            'name' => $this->name,
+            'password' => Hash::make($this->password),
+        ];
 
-        // Om du vill logga in användaren direkt efter registrering:
-        auth()->login($user);
+        $tenant->run(function () use ($userData){
+            $user = User::create($userData);
+            auth()->login($user);
+        });
 
         // Omdirigera till tenantens dashboard eller annan lämplig sida
         $this->redirect(
