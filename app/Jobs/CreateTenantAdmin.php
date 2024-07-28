@@ -19,6 +19,7 @@ class CreateTenantAdmin implements ShouldQueue
     use SerializesModels;
 
     protected $tenant;
+    protected $userData;
 
     /**
      * Create a new job instance.
@@ -33,6 +34,7 @@ class CreateTenantAdmin implements ShouldQueue
      */
     public function handle(): void
     {
+        //sleep(20);
         $this->tenant->run(function ($tenant) {
             $user = User::create(
                 $tenant->only(['name', 'email', 'password'])
@@ -44,8 +46,6 @@ class CreateTenantAdmin implements ShouldQueue
                 'password' => null,
                 'ready' => true,
             ]);
-
-            auth()->login($user);
         });
     }
 }

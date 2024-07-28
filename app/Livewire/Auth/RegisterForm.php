@@ -63,22 +63,29 @@ class RegisterForm extends Component
         //$data = $this->validate();
         $data['password'] = bcrypt($data['password']);
 
-        $domain = $data['subDomain'];
+        $subDomain = $data['subDomain'];
         unset($data['subDomain']);
-        $domain = $domain . '.' . $this->selectedDomain;
+        $domain = $subDomain . '.' . $this->selectedDomain;
 
-        //dd($data, $domain);
-
-        $tenant = Tenant::create($data + [
+        $tenant = new Tenant(
+            attributes: [
+                'id' => $subDomain,
+                'name' => $data['name'],
+                'email' => $data['email'],
+                'password' => $data['password'],
                 'ready' => false,
-                // some other stuff, if you need. like cashier trials
-            ]);
+            ]
+        );
+
+        $tenant->save();
 
         $tenant->domains()->create(
             attributes: [
                 'domain' => $domain,
             ]
         );
+
+
         // Bygg fullständig URL för omdirigering
         $protocol = request()->getScheme(); // http eller https
         $host = $domain; // Subdomänen vi har skapat
@@ -91,7 +98,7 @@ class RegisterForm extends Component
         $redirectUrl .= route('pages:tenants:home', [], false);
 
         // Generera en impersonation token för att autentisera användaren i tenant-konteksten
-        $token = tenancy()->impersonate($tenant, auth()->id(), $redirectUrl, 'web');
+        $token = tenancy()->impersonate($tenant, 1, $redirectUrl, 'web');
 
         $url = tenant_route($domain, 'pages:tenants:auth:impersonate', ['token' => $token->token]);
         // Omdirigera till tenantens domän med impersonation token

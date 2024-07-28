@@ -18,5 +18,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->group('universal', []);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+        $exceptions->renderable(function (Stancl\Tenancy\Exceptions\TenantDatabaseDoesNotExistException $e, $request) {
+            return response()->view('errors.building', [], 503);
+        });
+
     })->create();

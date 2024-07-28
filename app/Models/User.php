@@ -13,7 +13,6 @@ use Illuminate\Notifications\Notifiable;
 class User extends Authenticatable
 {
     use HasFactory;
-    use HasUlids;
     use Notifiable;
     use SoftDeletes;
 

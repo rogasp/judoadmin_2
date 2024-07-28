@@ -34,11 +34,16 @@ class DatabaseSeeder extends Seeder
         $domain = $data['domain'];
         unset($data['domain']);
 
-        $tenant = Tenant::create($data + [
+        $tenant = new Tenant(
+            attributes: [
+                'id' => 'foo',
+                'name' => $data['name'],
+                'email' => $data['email'],
+                'password' => $data['password'],
                 'ready' => false,
-                // some other stuff, if you need. like cashier trials
-            ]);
-
+            ]
+        );
+        $tenant->save();
 
         $tenant->domains()->create(
             attributes: [
