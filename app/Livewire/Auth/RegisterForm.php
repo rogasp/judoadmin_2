@@ -3,18 +3,15 @@
 namespace App\Livewire\Auth;
 
 use App\Models\Tenant;
-use Illuminate\Auth\AuthManager;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
-use Stancl\Tenancy\Features\UserImpersonation;
 
 class RegisterForm extends Component
 {
-
     public $centralDomains = [];
     public $selectedDomain;
 
@@ -24,67 +21,53 @@ class RegisterForm extends Component
     public $email;
     public $password;
     public $password_confirmation;
+    public $plan;
 
-    protected $rules = [
-        'name' => 'required|string|max:255',
-        'subDomain' => [
-            'required',
-            'string',
-            'max:255',
-            'alpha_dash',
-        ],
-        'email' => 'required|string|email|max:255|unique:users',
-        'password' => 'required|string|min:8|confirmed',
-    ];
-
-    private function addUniqueSubdomainRule()
+    public function rules()
     {
-        $this->rules['subDomain'][] = Rule::unique('tenants', 'id')->where(function ($query) {
-            return $query->where('id', $this->subDomain . '.' . $this->selectedDomain);
-        });
+        return [
+            'name' => 'required|string|max:255',
+            'subDomain' => [
+                'required',
+                'string',
+                'max:255',
+                'alpha_dash',
+                Rule::unique('tenants', 'id')->where(function ($query) {
+                    return $query->where('id', $this->subDomain . '.' . $this->selectedDomain);
+                }),
+            ],
+            'selectedDomain' => 'required|string|in:' . implode(',', Config::get('tenancy.central_domains', [])),
+            'email' => 'required|string|email|max:255|unique:users',
+            'password' => 'required|string|min:8|confirmed',
+        ];
     }
 
-    public function mount()
+    public function mount($plan = 'free'): void
     {
+        $this->plan = $plan;
         $this->centralDomains = Config::get('tenancy.central_domains', []);
         $this->selectedDomain = $this->centralDomains[0] ?? null;
     }
 
-    public function submit(AuthManager $auth): \Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector|\Illuminate\Foundation\Application
+    public function submit(): \Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector|\Illuminate\Foundation\Application
     {
-        //$this->addUniqueSubdomainRule();
-        //dd($this->subDomain, $this->selectedDomain, $this->name, $this->email, $this->password, $this->password_confirmation);
-        $data = [
-            'name' => $this->name,
-            'email' => $this->email,
-            'password' => $this->password,
-            'subDomain' => $this->subDomain,
-        ];
-        //$data = $this->validate();
-        $data['password'] = bcrypt($data['password']);
+        $this->validate();
 
-        $subDomain = $data['subDomain'];
-        unset($data['subDomain']);
+        $subDomain = $this->subDomain;
         $domain = $subDomain . '.' . $this->selectedDomain;
 
-        $tenant = new Tenant(
-            attributes: [
-                'id' => $subDomain,
-                'name' => $data['name'],
-                'email' => $data['email'],
-                'password' => $data['password'],
-                'ready' => false,
-            ]
-        );
+        $tenant = Tenant::create([
+            'id' => $subDomain,
+            'name' => $this->name,
+            'email' => $this->email,
+            'password' => Hash::make($this->password),
+            'ready' => false,
+            'plan' => $this->plan,
+        ]);
 
-        $tenant->save();
-
-        $tenant->domains()->create(
-            attributes: [
-                'domain' => $domain,
-            ]
-        );
-
+        $tenant->domains()->create([
+            'domain' => $domain,
+        ]);
 
         // Bygg fullständig URL för omdirigering
         $protocol = request()->getScheme(); // http eller https
@@ -95,6 +78,7 @@ class RegisterForm extends Component
         if ($port && $port != 80 && $port != 443) {
             $redirectUrl .= ':' . $port;
         }
+
         $redirectUrl .= route('pages:tenants:home', [], false);
 
         // Generera en impersonation token för att autentisera användaren i tenant-konteksten
@@ -104,10 +88,9 @@ class RegisterForm extends Component
         // Omdirigera till tenantens domän med impersonation token
         return redirect($url);
     }
-    public function render(Factory $factory): view
+
+    public function render(Factory $factory): View
     {
-        return $factory->make(
-            view: 'livewire.auth.register-form'
-        );
+        return $factory->make('livewire.auth.register-form');
     }
 }

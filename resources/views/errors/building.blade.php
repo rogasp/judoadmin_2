@@ -1,5 +1,3 @@
-<!-- resources/views/errors/building.blade.php -->
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -22,6 +20,7 @@
             border: 1px solid #ddd;
             border-radius: 8px;
             background-color: #fff;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
         .button {
             margin-top: 20px;
@@ -36,12 +35,37 @@
         .button:hover {
             background-color: #0056b3;
         }
+        .progress-bar-container {
+            margin-top: 20px;
+            height: 20px;
+            background-color: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .progress-bar {
+            height: 100%;
+            background-color: #007bff;
+            width: 0;
+            animation: progress-animation 5s linear infinite;
+        }
+        @keyframes progress-animation {
+            0% { width: 0; }
+            100% { width: 100%; }
+        }
     </style>
+    <script>
+        setTimeout(function() {
+            window.location.reload();
+        }, 5000);
+    </script>
 </head>
 <body>
 <div class="container">
     <h1>We're building your site</h1>
     <p>Please wait a moment while we set things up for you.</p>
+    <div class="progress-bar-container">
+        <div class="progress-bar"></div>
+    </div>
     <a class="button" href="javascript:window.location.reload()">Retry</a>
 </div>
 </body>
