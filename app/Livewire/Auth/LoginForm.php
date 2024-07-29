@@ -2,36 +2,33 @@
 
 namespace App\Livewire\Auth;
 
-use Illuminate\Auth\AuthManager;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
 use Illuminate\Validation\ValidationException;
-use Livewire\Attributes\Validate;
 use Livewire\Component;
 
 class LoginForm extends Component
 {
-    #[validate(['required', 'email', 'max:255'])]
     public string $email = '';
-
-    #[validate(['required', 'string', 'max:255'])]
     public string $password = '';
 
-    public function submit(AuthManager $auth): void
-    {
-        $this->validate();
+    protected $rules = [
+        'email' => 'required|email|max:255',
+        'password' => 'required|string|max:255',
+    ];
 
-        if(!$auth->attempt(['email' => $this->email, 'password' => $this->password])) {
+    public function submit(): void
+    {
+        $data = $this->validate();
+
+        if(!Auth::attempt(['email' => $data['email'], 'password' => $data['password']])) {
             throw ValidationException::withMessages([
                 'email' => 'Invalid email or password'
             ]);
         }
 
-        //dd($auth);
-
-        $this->redirect(
-            url: route('pages:tenants:home')
-        );
+        $this->redirect(route('pages:tenants:home'));
     }
     public function render(Factory $factory): view
     {

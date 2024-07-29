@@ -11,7 +11,19 @@ class AuthMiddleware extends Authenticate
 {
     protected function redirectTo(Request $request): string
     {
-        return route('pages:auth:register');
+        if ($this->isCentralDomain($request)) {
+            return route('pages:auth:register'); // Central domain route
+        } else {
+            return route('pages:tenants:auth:login');
+        }
 
+    }
+
+    protected function isCentralDomain(Request $request): bool
+    {
+        $centralDomains = config('tenancy.central_domains', []);
+        $host = $request->getHost();
+
+        return in_array($host, $centralDomains);
     }
 }

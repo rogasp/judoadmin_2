@@ -18,6 +18,6 @@ Route::middleware([
         })->name('impersonate');
     });
     Route::middleware(['auth'])->group(static function (): void {
-        Route::view('/', 'pages.tenants.index')->name('home');
+        Route::view('/', 'pages.tenants.home')->name('home');
     });
 });
